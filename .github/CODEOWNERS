@@ -1,0 +1,8 @@
+# Any change to prod.yaml requires your explicit review, regardless of who
+# (or what automation) opened the PR. As a solo maintainer this is a
+# "stop and actually look" gate rather than a second-person check - once
+# a teammate joins, add their handle here too.
+/environments/prod.yaml   @cloudteamuser3-bit
+
+# Staging can be approved by any team member with write access - branch
+# protection just needs "1 approval required", no CODEOWNERS needed there.
