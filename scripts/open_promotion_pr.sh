@@ -24,8 +24,26 @@ if gh pr list --head "$BRANCH" --json number --jq '.[0].number' | grep -q .; the
   echo "==> Updating existing PR on branch $BRANCH"
   PR_NUMBER=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number')
   gh pr edit "$PR_NUMBER" --body-file "$BODY_FILE"
+  PR_URL="$PR_NUMBER"
 else
   echo "==> Opening new PR on branch $BRANCH"
-  gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE" --label "$LABELS"
+  PR_URL=$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE")
+fi
+
+if [ -n "${LABELS:-}" ]; then
+  # Try to create any labels that don't exist
+  IFS=',' read -ra ADDR <<< "$LABELS"
+  for label in "${ADDR[@]}"; do
+    label=$(echo "$label" | xargs)
+    if [ -n "$label" ]; then
+      if ! gh label list --json name --jq '.[].name' 2>/dev/null | grep -qFx "$label"; then
+        echo "==> Attempting to create label: $label"
+        gh label create "$label" --color "bfd4f2" --description "Automatically created label" || true
+      fi
+    fi
+  done
+
+  echo "==> Attempting to add labels to PR ($PR_URL): $LABELS"
+  gh pr edit "$PR_URL" --add-label "$LABELS" || echo "==> Failed to add labels (might lack permissions or label doesn't exist)"
 fi
 # ---- END SEAM ----
